@@ -2109,9 +2109,15 @@
         AFRAME.registerComponent('abrir-mapa-vr', {
             init: function () {
                 var el = this.el;
+                var ultimaApertura = 0;
                 el.addEventListener('click', function (evt) {
                     if (_transicionActiva) return;
                     if (evt && evt.stopPropagation) evt.stopPropagation();
+                    var ahora = performance.now();
+                    // Algunos mandos emiten triggerdown, selectstart y click para
+                    // una sola pulsacion. Evita que el segundo evento cierre el mapa.
+                    if (ahora - ultimaApertura < 700) return;
+                    ultimaApertura = ahora;
                     toggleMenu3D();
                 });
                 el.addEventListener('mouseenter', function () {
@@ -2607,9 +2613,12 @@
                 if (!tieneMenuRadial) entidad.setAttribute('tour-logic', '');
 
                 var areaInteractiva = document.createElement('a-plane');
-                areaInteractiva.setAttribute('width', '1.55');
-                areaInteractiva.setAttribute('height', '1.35');
-                areaInteractiva.setAttribute('position', '0 0 -0.03');
+                // Plano invisible delante de la flecha: permite seleccionarla en
+                // todo su contorno, incluidos los espacios transparentes internos.
+                var esFlechaInicial = _escenaActual === 'fuera';
+                areaInteractiva.setAttribute('width', esFlechaInicial ? '2.30' : '1.90');
+                areaInteractiva.setAttribute('height', esFlechaInicial ? '1.85' : '1.55');
+                areaInteractiva.setAttribute('position', '0 0 0.08');
                 areaInteractiva.setAttribute('material', 'shader: flat; color: #FFFFFF; opacity: 0.001; transparent: true; depthTest: false; side: double');
                 areaInteractiva.setAttribute('class', 'clickable area-interactiva-flecha');
                 areaInteractiva.setAttribute('data-target', flecha.target);
@@ -2634,17 +2643,17 @@
                     .replace(/\n/g, ' ')
                     .replace(/^(?:ir|volver|regresar|ingresar) a\s+/i, '');
                 var nombreLugar = tieneMenuRadial ? 'Elegir destino' : (esRegreso ? 'Regresar a ' : 'Ir a ') + destinoLugar;
-                var labelWidth = Math.min(Math.max(nombreLugar.length * 0.11 + 0.55, 1.35), 3.25);
+                var labelWidth = 2.35;
                 var labelHeight = nombreLugar.length > 22 ? 0.58 : 0.44;
 
                 var etiqueta = document.createElement('a-entity');
                 etiqueta.classList.add('etiqueta-flotante');
-                etiqueta.setAttribute('position', '0 -0.92 0.16');
+                var salidaEtiqueta = item.direccion === 'izquierda' ? -1.90 : 1.90;
+                etiqueta.setAttribute('position', salidaEtiqueta.toFixed(2) + ' 0 0.22');
                 etiqueta.setAttribute('visible', 'false');
 
-                var fondoEtiqueta = document.createElement('a-plane');
-                fondoEtiqueta.setAttribute('width', labelWidth.toFixed(2));
-                fondoEtiqueta.setAttribute('height', labelHeight.toFixed(2));
+                var fondoEtiqueta = document.createElement('a-entity');
+                fondoEtiqueta.setAttribute('geometry', `primitive: rounded-rect; width: ${labelWidth.toFixed(2)}; height: ${labelHeight.toFixed(2)}; radius: 0.07`);
                 fondoEtiqueta.setAttribute('material', 'shader: flat; color: #FF0000; opacity: 0.96; transparent: true; depthTest: false; side: double');
                 fondoEtiqueta.setAttribute('position', '0 0 -0.01');
                 etiqueta.appendChild(fondoEtiqueta);
@@ -3521,7 +3530,7 @@
             class="clickable"></a-entity>
 
         <a-entity id="flechas-container"></a-entity>
-        <a-entity id="btn-mapa-escena" position="-0.14 9.21 -12.00" rotation="0 0 0"
+        <a-entity id="btn-mapa-escena" position="-0.14 6.50 -12.00" rotation="0 0 0"
             look-at="[camera]" class="clickable" abrir-mapa-vr
             geometry="primitive: rounded-rect; width: 3.1; height: 0.9; radius: 0.16"
             material="shader: flat; color: #FF0000; opacity: 0.96; transparent: true; depthTest: false">
