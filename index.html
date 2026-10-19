@@ -2665,26 +2665,8 @@
                 var salidaEtiqueta = item.direccion === 'izquierda' ? -1.90 : 1.90;
                 etiqueta.setAttribute('position', salidaEtiqueta.toFixed(2) + ' 0 0.22');
                 etiqueta.setAttribute('visible', 'false');
-                if (esRegreso) {
-                    etiqueta.classList.add('clickable', 'boton-regreso');
-                    etiqueta.setAttribute('data-target', flecha.target);
-                    etiqueta.addEventListener('mouseenter', function () {
-                        etiqueta._punteroEncima = true;
-                        etiqueta.setAttribute('visible', 'true');
-                        etiqueta.setAttribute('scale', '1.06 1.06 1.06');
-                    });
-                    etiqueta.addEventListener('mouseleave', function () {
-                        etiqueta._punteroEncima = false;
-                        etiqueta.setAttribute('scale', '1 1 1');
-                        setTimeout(function () {
-                            if (!etiqueta._punteroEncima) etiqueta.setAttribute('visible', 'false');
-                        }, 350);
-                    });
-                    etiqueta.addEventListener('click', function (evt) {
-                        if (_transicionActiva) return;
-                        if (evt && evt.stopPropagation) evt.stopPropagation();
-                        iniciarTransicion(flecha.target, flecha.mirarAlLlegar);
-                    });
+                if (!tieneMenuRadial) {
+                    etiqueta.classList.add(esRegreso ? 'boton-regreso' : 'boton-destino-directo');
                 }
 
                 var fondoEtiqueta = document.createElement('a-entity');
@@ -2692,6 +2674,28 @@
                 fondoEtiqueta.setAttribute('material', 'shader: flat; color: #FF0000; opacity: 0.96; transparent: true; depthTest: false; side: double');
                 fondoEtiqueta.setAttribute('position', '0 0 -0.01');
                 etiqueta.appendChild(fondoEtiqueta);
+
+                if (!tieneMenuRadial) {
+                    fondoEtiqueta.setAttribute('class', 'clickable fondo-boton-flecha');
+                    fondoEtiqueta.setAttribute('data-target', flecha.target);
+                    fondoEtiqueta.addEventListener('mouseenter', function () {
+                        etiqueta._punteroEncima = true;
+                        etiqueta.setAttribute('visible', 'true');
+                        etiqueta.setAttribute('scale', '1.06 1.06 1.06');
+                    });
+                    fondoEtiqueta.addEventListener('mouseleave', function () {
+                        etiqueta._punteroEncima = false;
+                        etiqueta.setAttribute('scale', '1 1 1');
+                        setTimeout(function () {
+                            if (!etiqueta._punteroEncima) etiqueta.setAttribute('visible', 'false');
+                        }, 350);
+                    });
+                    fondoEtiqueta.addEventListener('click', function (evt) {
+                        if (_transicionActiva) return;
+                        if (evt && evt.stopPropagation) evt.stopPropagation();
+                        iniciarTransicion(flecha.target, flecha.mirarAlLlegar);
+                    });
+                }
 
                 var textoEtiqueta = document.createElement('a-entity');
                 textoEtiqueta.setAttribute('troika-text', {
@@ -2836,7 +2840,7 @@
             btnCerrarMapa.appendChild(textoCerrarMapa);
             btnCerrarMapa.addEventListener('click', function (evt) {
                 if (evt && evt.stopPropagation) evt.stopPropagation();
-                toggleMenu3D();
+                cerrarMenu3D();
             });
             btnCerrarMapa.addEventListener('mouseenter', function () {
                 btnCerrarMapa.setAttribute('scale', '1.12 1.12 1.12');
@@ -2896,16 +2900,6 @@
             btnEnlace.appendChild(txtEnlace);
 
             btnEnlace.addEventListener('click', function () { window.location.href = 'https://esanlabs.github.io/360VideosVR-Final/'; });
-
-            btnEnlace.addEventListener('mouseenter', function () {
-                btnFill.setAttribute('material', 'color: #E3173E; opacity: 0.95');
-                btnEnlace.setAttribute('scale', '1.05 1.05 1.05');
-            });
-
-            btnEnlace.addEventListener('mouseleave', function () {
-                btnFill.setAttribute('material', 'color: #222222; opacity: 0.95');
-                btnEnlace.setAttribute('scale', '1 1 1');
-            });
 
             menu.appendChild(btnEnlace);
         }
@@ -2999,6 +2993,18 @@
         }
 
         var _menuBuilt = false;
+        function cerrarMenu3D() {
+            var menu = document.querySelector('#menu-3d');
+            if (!menu) return;
+            menu.setAttribute('visible', 'false');
+            var btn2D = document.getElementById('btn-menu-2d');
+            if (btn2D) btn2D.innerText = 'Mapa general';
+            menu.querySelectorAll('.menu-btn').forEach(function (boton) {
+                boton.classList.remove('clickable');
+            });
+            refreshRaycasters();
+        }
+
         function toggleMenu3D() {
             if (!_menuBuilt) {
                 construirMenu3D();
@@ -3027,11 +3033,7 @@
                 botonesMenu.forEach(b => b.classList.add('clickable'));
                 refreshRaycasters();
             } else {
-                menu.setAttribute('visible', 'false');
-                if (btn2D) btn2D.innerText = 'Mapa general';
-                var botonesMenu = menu.querySelectorAll('.menu-btn');
-                botonesMenu.forEach(b => b.classList.remove('clickable'));
-                refreshRaycasters();
+                cerrarMenu3D();
             }
         }
 
