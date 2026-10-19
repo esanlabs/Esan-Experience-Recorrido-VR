@@ -2058,6 +2058,7 @@
         AFRAME.registerComponent('tour-logic', {
             init: function () {
                 var el = this.el;
+                var cierreEtiquetaTimer = null;
                 el.addEventListener('click', function (evt) {
                     if (_transicionActiva) return;
                     if (_isDragging) return;
@@ -2071,6 +2072,7 @@
                     }
                 });
                 el.addEventListener('mouseenter', function () {
+                    clearTimeout(cierreEtiquetaTimer);
                     el.setAttribute('scale', '1.20 1.20 1.20');
                     var etiqueta = el.parentElement && el.parentElement.querySelector('.etiqueta-flotante');
                     if (etiqueta) etiqueta.setAttribute('visible', 'true');
@@ -2078,7 +2080,12 @@
                 el.addEventListener('mouseleave', function () {
                     el.setAttribute('scale', '1.05 1.05 1.05');
                     var etiqueta = el.parentElement && el.parentElement.querySelector('.etiqueta-flotante');
-                    if (etiqueta) etiqueta.setAttribute('visible', 'false');
+                    if (etiqueta) {
+                        clearTimeout(cierreEtiquetaTimer);
+                        cierreEtiquetaTimer = setTimeout(function () {
+                            if (!etiqueta._punteroEncima) etiqueta.setAttribute('visible', 'false');
+                        }, 650);
+                    }
                 });
             }
         });
@@ -2651,6 +2658,27 @@
                 var salidaEtiqueta = item.direccion === 'izquierda' ? -1.90 : 1.90;
                 etiqueta.setAttribute('position', salidaEtiqueta.toFixed(2) + ' 0 0.22');
                 etiqueta.setAttribute('visible', 'false');
+                if (esRegreso) {
+                    etiqueta.classList.add('clickable', 'boton-regreso');
+                    etiqueta.setAttribute('data-target', flecha.target);
+                    etiqueta.addEventListener('mouseenter', function () {
+                        etiqueta._punteroEncima = true;
+                        etiqueta.setAttribute('visible', 'true');
+                        etiqueta.setAttribute('scale', '1.06 1.06 1.06');
+                    });
+                    etiqueta.addEventListener('mouseleave', function () {
+                        etiqueta._punteroEncima = false;
+                        etiqueta.setAttribute('scale', '1 1 1');
+                        setTimeout(function () {
+                            if (!etiqueta._punteroEncima) etiqueta.setAttribute('visible', 'false');
+                        }, 350);
+                    });
+                    etiqueta.addEventListener('click', function (evt) {
+                        if (_transicionActiva) return;
+                        if (evt && evt.stopPropagation) evt.stopPropagation();
+                        iniciarTransicion(flecha.target, flecha.mirarAlLlegar);
+                    });
+                }
 
                 var fondoEtiqueta = document.createElement('a-entity');
                 fondoEtiqueta.setAttribute('geometry', `primitive: rounded-rect; width: ${labelWidth.toFixed(2)}; height: ${labelHeight.toFixed(2)}; radius: 0.07`);
