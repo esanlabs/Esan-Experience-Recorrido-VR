@@ -2106,6 +2106,23 @@
             }
         });
 
+        AFRAME.registerComponent('abrir-mapa-vr', {
+            init: function () {
+                var el = this.el;
+                el.addEventListener('click', function (evt) {
+                    if (_transicionActiva) return;
+                    if (evt && evt.stopPropagation) evt.stopPropagation();
+                    toggleMenu3D();
+                });
+                el.addEventListener('mouseenter', function () {
+                    el.setAttribute('scale', '1.08 1.08 1.08');
+                });
+                el.addEventListener('mouseleave', function () {
+                    el.setAttribute('scale', '1 1 1');
+                });
+            }
+        });
+
         AFRAME.registerComponent('vr-controller-listener', {
             init: function () {
                 var controller = this.el;
@@ -2117,6 +2134,7 @@
                     return target.hasAttribute('hotspot-info') ||
                         target.hasAttribute('local-video-toggle') ||
                         target.hasAttribute('open-scene-frame') ||
+                        target.hasAttribute('abrir-mapa-vr') ||
                         target.hasAttribute('menu-interactivo') ||
                         target.hasAttribute('data-target');
                 }
@@ -2556,14 +2574,14 @@
                 flecha: regreso,
                 direccion: invertirFlechas ? 'derecha' : 'izquierda',
                 esRegreso: true,
-                x: invertirFlechas ? 0.58 : -0.58,
+                x: invertirFlechas ? 0.72 : -0.72,
                 opciones: [regreso]
             });
             if (opcionesDestinos.length) navegacion.push({
                 flecha: opcionesDestinos[0],
                 direccion: invertirFlechas ? 'izquierda' : 'derecha',
                 esRegreso: false,
-                x: invertirFlechas ? -0.58 : 0.58,
+                x: invertirFlechas ? -0.72 : 0.72,
                 opciones: opcionesDestinos
             });
             if (navegacion.length === 1) navegacion[0].x = 0;
@@ -2697,7 +2715,7 @@
                         var nombreOpcion = texto3DSeguro(opcion.label || nombresDestinos[opcion.target] || opcion.target)
                             .replace(/\n/g, ' ')
                             .replace(/^(?:ir|volver|regresar|ingresar) a\s+/i, '');
-                        var anchoBurbuja = Math.min(Math.max(nombreOpcion.length * 0.09 + 0.72, 1.45), 2.35);
+                        var anchoBurbuja = 2.35;
                         var burbuja = document.createElement('a-entity');
                         var centroVertical = (item.opciones.length - 1) * 0.31;
                         burbuja.setAttribute('position', `0 ${(centroVertical - indice * 0.62).toFixed(2)} 0`);
@@ -3503,6 +3521,13 @@
             class="clickable"></a-entity>
 
         <a-entity id="flechas-container"></a-entity>
+        <a-entity id="btn-mapa-escena" position="-0.14 9.21 -12.00" rotation="0 0 0"
+            look-at="[camera]" class="clickable" abrir-mapa-vr
+            geometry="primitive: rounded-rect; width: 3.1; height: 0.9; radius: 0.16"
+            material="shader: flat; color: #FF0000; opacity: 0.96; transparent: true; depthTest: false">
+            <a-entity troika-text="value: MAPA ESAN; color: #FFFFFF; fontSize: 0.32; maxWidth: 2.7; textAlign: center; anchorX: center; anchorY: middle; fontWeight: bold"
+                position="0 0 0.03"></a-entity>
+        </a-entity>
         <a-entity id="menu-3d" visible="false" scale="0.85 0.85 0.85" menu-follow="distance: 4.5; heightOffset: -0.1; lerp: 0.22"></a-entity>
 
         <a-entity id="hotspots-entrada" class="grupo-hotspots" visible="false">
