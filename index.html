@@ -1056,7 +1056,7 @@
                     icono.classList.add('clickable');
                 });
                 grupo.querySelectorAll('.hotspot-preview').forEach(function (preview) {
-                    preview.setAttribute('visible', 'true');
+                    preview.setAttribute('visible', 'false');
                 });
                 sincronizarPreviewsHotspots(grupo);
             }
@@ -1304,6 +1304,7 @@
             label.removeAttribute('look-at');
             label.setAttribute('position', '0 1.25 0.08');
             label.setAttribute('scale', '1.25 1.25 1.25');
+            label.setAttribute('visible', 'false');
 
             icono._hotspotPreviewEl = label;
             icono.appendChild(label);
@@ -1318,9 +1319,7 @@
                 var target = getHotspotTarget(icono);
                 if (!target || action === 'close') return;
                 var preview = icono._hotspotPreviewEl || crearPreviewHotspot(icono, obtenerTituloPreviewHotspot(target));
-                if (preview && isInVisibleHotspotGroup(icono) && !document.querySelector('.panel-activo')) {
-                    preview.setAttribute('visible', 'true');
-                }
+                if (preview) preview.setAttribute('visible', 'false');
             });
         }
 
@@ -1382,6 +1381,9 @@
                         cancelShrink();
                         setHoverScale(0.9);
                         if (!previewEl) previewEl = el._hotspotPreviewEl || crearPreviewHotspot(el, obtenerTituloPreviewHotspot(data.target));
+                        if (previewEl && isInVisibleHotspotGroup(el) && !document.querySelector('.panel-activo')) {
+                            previewEl.setAttribute('visible', 'true');
+                        }
                     } else {
                         el.setAttribute('color', '#FF5555');
                     }
@@ -1394,6 +1396,7 @@
                             shrinkTimer = null;
                             if (!isPointerOver) setHoverScale(0.8);
                         }, 180);
+                        if (previewEl) previewEl.setAttribute('visible', 'false');
                     } else {
                         el.setAttribute('color', '#FF0000');
                     }
@@ -2650,8 +2653,9 @@
                     .replace(/\n/g, ' ')
                     .replace(/^(?:ir|volver|regresar|ingresar) a\s+/i, '');
                 var nombreLugar = tieneMenuRadial ? 'Elegir destino' : (esRegreso ? 'Regresar a ' : 'Ir a ') + destinoLugar;
-                var labelWidth = 2.35;
-                var labelHeight = nombreLugar.length > 22 ? 0.58 : 0.44;
+                var esEtiquetaExterior = _escenaActual === 'fuera';
+                var labelWidth = esEtiquetaExterior ? 2.75 : 2.35;
+                var labelHeight = esEtiquetaExterior ? 0.56 : (nombreLugar.length > 22 ? 0.58 : 0.44);
 
                 var etiqueta = document.createElement('a-entity');
                 etiqueta.classList.add('etiqueta-flotante');
