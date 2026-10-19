@@ -1986,7 +1986,8 @@
 
         const posicionesNavegacion = {
             'fuera': '-10.20 4.22 -6.32',
-            'entrada': '7.36 3.35 9.48'
+            'entrada': '7.36 3.35 9.48',
+            'jardin': '-2.92 3.00 -9.81'
         };
 
         var _isDragging = false;
@@ -2151,6 +2152,7 @@
                         target.hasAttribute('local-video-toggle') ||
                         target.hasAttribute('open-scene-frame') ||
                         target.hasAttribute('abrir-mapa-vr') ||
+                        target.hasAttribute('cerrar-mapa-vr') ||
                         target.hasAttribute('menu-interactivo') ||
                         target.hasAttribute('data-target');
                 }
@@ -2606,7 +2608,8 @@
                 var flecha = item.flecha;
 
                 var wrapper = document.createElement('a-entity');
-                wrapper.setAttribute('position', item.x + ' 0 0');
+                var posicionX = item.x + (flecha.target === 'jardin' ? -0.30 : 0);
+                wrapper.setAttribute('position', posicionX.toFixed(2) + ' 0 0');
 
                 var entidad = document.createElement('a-image');
                 var esRegreso = item.esRegreso;
@@ -2816,6 +2819,32 @@
             titulo.setAttribute('position', '0 1.55 0');
             titulo.setAttribute('width', '4.5');
             menu.appendChild(titulo);
+
+            var btnCerrarMapa = document.createElement('a-entity');
+            btnCerrarMapa.setAttribute('cerrar-mapa-vr', '');
+            btnCerrarMapa.setAttribute('geometry', 'primitive: rounded-rect; width: 0.42; height: 0.42; radius: 0.08');
+            btnCerrarMapa.setAttribute('material', 'shader: flat; color: #FF0000; opacity: 0.98; depthTest: false');
+            btnCerrarMapa.setAttribute('position', '1.68 1.53 0.04');
+            btnCerrarMapa.setAttribute('class', 'clickable menu-btn-cerrar');
+
+            var textoCerrarMapa = document.createElement('a-entity');
+            textoCerrarMapa.setAttribute('troika-text', {
+                value: 'X', color: '#FFFFFF', fontSize: 0.24,
+                textAlign: 'center', anchorX: 'center', anchorY: 'middle', fontWeight: 'bold'
+            });
+            textoCerrarMapa.setAttribute('position', '0 0 0.025');
+            btnCerrarMapa.appendChild(textoCerrarMapa);
+            btnCerrarMapa.addEventListener('click', function (evt) {
+                if (evt && evt.stopPropagation) evt.stopPropagation();
+                toggleMenu3D();
+            });
+            btnCerrarMapa.addEventListener('mouseenter', function () {
+                btnCerrarMapa.setAttribute('scale', '1.12 1.12 1.12');
+            });
+            btnCerrarMapa.addEventListener('mouseleave', function () {
+                btnCerrarMapa.setAttribute('scale', '1 1 1');
+            });
+            menu.appendChild(btnCerrarMapa);
 
             let cols = 5;
             let startX = -1.60; let startY = 1.1; let gapX = 0.80; let gapY = 0.40;
@@ -3997,7 +4026,7 @@
                 </a-plane>
             </a-entity>
 
-            <a-image src="#img-info-icon" position="0.79 6.50 -11.97" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="-3.91 6.00 -11.35" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-convention-explanada; action: toggle">
             </a-image>
 
@@ -4104,7 +4133,7 @@
         </a-entity>
 
         <a-entity id="hotspots-biblioteca" class="grupo-hotspots" visible="false">
-            <a-image src="#img-info-icon" position="-8.69 4.11 7.19" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="9.07 5.61 -7.85" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-biblioteca; action: toggle">
             </a-image>
 
