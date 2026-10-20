@@ -2037,6 +2037,18 @@
             'jardin': '-2.92 3.00 -9.81'
         };
 
+        const posicionMapaGeneralPorEscena = {
+            'datalab': '-11.99 5.74 -0.53'
+        };
+        const posicionMapaGeneralDefault = '-0.14 6.50 -12.00';
+
+        function actualizarPosicionMapaGeneral(nombreEscena) {
+            var botonMapa = document.querySelector('#btn-mapa-escena');
+            if (!botonMapa) return;
+            botonMapa.setAttribute('position', posicionMapaGeneralPorEscena[nombreEscena] || posicionMapaGeneralDefault);
+            botonMapa.setAttribute('rotation', '0 0 0');
+        }
+
         var _isDragging = false;
         var _mousedownX = 0, _mousedownY = 0;
         document.addEventListener('mousedown', function (e) {
@@ -2521,6 +2533,7 @@
                     btnLanzarMinijuego.classList.remove('clickable');
                     _escenaAnterior = _escenaActual;
                     _escenaActual = nombreEscena;
+                    actualizarPosicionMapaGeneral(nombreEscena);
                     generarFlechas(datos.flechas);
                     aplicarInicioEscena(nombreEscena, direccionDeseada);
                     contenedorFlechas.setAttribute('visible', 'true');
@@ -3221,6 +3234,7 @@
                     sincronizarPreviewsHotspots(hotspotEntrada);
                 }
                 _escenaActual = 'fuera';
+                actualizarPosicionMapaGeneral('fuera');
                 _transicionActiva = false;
                 actualizarDestinosActivos();
                 refreshRaycasters();
@@ -3230,6 +3244,7 @@
             cieloFondo.setAttribute('rotation', datos.rotacionSky || '0 -90 0');
             aplicarInicioEscena('fuera');
             _escenaActual = 'fuera';
+            actualizarPosicionMapaGeneral('fuera');
             generarFlechas(datos.flechas);
 
             cieloFondo.addEventListener('materialtextureloaded', function onFirstTexture() {
