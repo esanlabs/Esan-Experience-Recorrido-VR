@@ -2170,6 +2170,18 @@
             init: function () {
                 var el = this.el;
                 var ultimaApertura = 0;
+                var salidaHoverTimer = null;
+
+                function priorizarBotonMapa() {
+                    if (!el.object3D) return;
+                    el.object3D.traverse(function (objeto) {
+                        if (objeto.isMesh) objeto.renderOrder = 1000;
+                    });
+                }
+
+                el.addEventListener('object3dset', priorizarBotonMapa);
+                requestAnimationFrame(priorizarBotonMapa);
+                setTimeout(priorizarBotonMapa, 300);
                 el.addEventListener('click', function (evt) {
                     if (_transicionActiva) return;
                     if (evt && evt.stopPropagation) evt.stopPropagation();
@@ -2185,10 +2197,19 @@
                     toggleMenu3D();
                 });
                 el.addEventListener('mouseenter', function () {
+                    clearTimeout(salidaHoverTimer);
+                    salidaHoverTimer = null;
+                    el.setAttribute('visible', 'true');
                     el.setAttribute('scale', '1.08 1.08 1.08');
                 });
                 el.addEventListener('mouseleave', function () {
-                    el.setAttribute('scale', '1 1 1');
+                    // El rayo del mando puede pasar brevemente de la flecha al
+                    // botón o a su etiqueta. Esperar evita el parpadeo visual.
+                    clearTimeout(salidaHoverTimer);
+                    salidaHoverTimer = setTimeout(function () {
+                        salidaHoverTimer = null;
+                        el.setAttribute('scale', '1 1 1');
+                    }, 900);
                 });
             }
         });
@@ -4545,7 +4566,7 @@
         </a-entity>
 
         <a-entity id="hotspots-cafeteria" class="grupo-hotspots" visible="false">
-            <a-image src="#img-info-icon" position="0.54 2.80 -11.99" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="8.00 3.80 -11.31" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-cafeteria; action: toggle">
             </a-image>
 
