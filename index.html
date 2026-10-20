@@ -1231,6 +1231,40 @@
                 .replace(/[¡¿]/g, '');
         }
 
+        // Los previews son solo informativos. Si sus meshes participan en el
+        // raycast, al aparecer delante del icono provocan mouseleave y entran
+        // en un ciclo de mostrar/ocultar, especialmente visible en Quest/Meta.
+        AFRAME.registerComponent('ignorar-raycast', {
+            init: function () {
+                this._ultimoRepaso = 0;
+                this._inicioRepaso = null;
+                this._desactivar = this.desactivar.bind(this);
+                this.el.addEventListener('object3dset', this._desactivar);
+                this.desactivar();
+            },
+            desactivar: function () {
+                if (!this.el.object3D) return;
+                this.el.object3D.traverse(function (objeto) {
+                    if (objeto.isMesh && !objeto._raycastOriginalPreview) {
+                        objeto._raycastOriginalPreview = objeto.raycast;
+                        objeto.raycast = function () {};
+                    }
+                });
+            },
+            tick: function (tiempo) {
+                // Las geometrías hijas de A-Frame se crean de forma asíncrona.
+                // Repasar durante el primer segundo cubre todos esos meshes.
+                if (this._inicioRepaso === null) this._inicioRepaso = tiempo;
+                if (tiempo - this._ultimoRepaso < 100) return;
+                this._ultimoRepaso = tiempo;
+                this.desactivar();
+                if (tiempo - this._inicioRepaso > 1000) this.el.removeAttribute('ignorar-raycast');
+            },
+            remove: function () {
+                this.el.removeEventListener('object3dset', this._desactivar);
+            }
+        });
+
         function crearLabelNegro3D(titulo, className) {
             var cleanTitle = texto3DSeguro(titulo || '').replace(/\s+/g, ' ').trim();
             if (!cleanTitle) return null;
@@ -1239,6 +1273,7 @@
             var height = cleanTitle.length > 22 ? 0.54 : 0.42;
             var label = document.createElement('a-entity');
             label.classList.add(className || 'preview-label');
+            label.setAttribute('ignorar-raycast', '');
             label.setAttribute('visible', 'true');
             label.setAttribute('look-at', '[camera]');
 
@@ -1335,6 +1370,7 @@
                 var previewAttempts = 0;
                 var isPointerOver = false;
                 var shrinkTimer = null;
+                var hidePreviewTimer = null;
 
                 function setHoverScale(scale) {
                     var value = scale + ' ' + scale + ' ' + scale;
@@ -1347,6 +1383,12 @@
                     if (!shrinkTimer) return;
                     clearTimeout(shrinkTimer);
                     shrinkTimer = null;
+                }
+
+                function cancelPreviewHide() {
+                    if (!hidePreviewTimer) return;
+                    clearTimeout(hidePreviewTimer);
+                    hidePreviewTimer = null;
                 }
 
                 function asegurarPreview() {
@@ -1379,6 +1421,7 @@
                     if (data.action !== 'close') {
                         isPointerOver = true;
                         cancelShrink();
+                        cancelPreviewHide();
                         setHoverScale(0.9);
                         if (!previewEl) previewEl = el._hotspotPreviewEl || crearPreviewHotspot(el, obtenerTituloPreviewHotspot(data.target));
                         if (previewEl && isInVisibleHotspotGroup(el) && !document.querySelector('.panel-activo')) {
@@ -1396,7 +1439,11 @@
                             shrinkTimer = null;
                             if (!isPointerOver) setHoverScale(0.8);
                         }, 180);
-                        if (previewEl) previewEl.setAttribute('visible', 'false');
+                        cancelPreviewHide();
+                        hidePreviewTimer = setTimeout(function () {
+                            hidePreviewTimer = null;
+                            if (!isPointerOver && previewEl) previewEl.setAttribute('visible', 'false');
+                        }, 180);
                     } else {
                         el.setAttribute('color', '#FF0000');
                     }
@@ -2117,6 +2164,8 @@
             }
         });
 
+        var _bloquearAperturaMapaHasta = 0;
+
         AFRAME.registerComponent('abrir-mapa-vr', {
             init: function () {
                 var el = this.el;
@@ -2125,6 +2174,10 @@
                     if (_transicionActiva) return;
                     if (evt && evt.stopPropagation) evt.stopPropagation();
                     var ahora = performance.now();
+                    // Al cerrar en Quest/Meta pueden llegar click y selectstart de
+                    // la misma pulsacion. No permitimos que el segundo evento
+                    // atraviese el menu ya oculto y vuelva a abrirlo.
+                    if (ahora < _bloquearAperturaMapaHasta) return;
                     // Algunos mandos emiten triggerdown, selectstart y click para
                     // una sola pulsacion. Evita que el segundo evento cierre el mapa.
                     if (ahora - ultimaApertura < 700) return;
@@ -2133,6 +2186,31 @@
                 });
                 el.addEventListener('mouseenter', function () {
                     el.setAttribute('scale', '1.08 1.08 1.08');
+                });
+                el.addEventListener('mouseleave', function () {
+                    el.setAttribute('scale', '1 1 1');
+                });
+            }
+        });
+
+        AFRAME.registerComponent('cerrar-mapa-vr', {
+            init: function () {
+                var el = this.el;
+                var ultimoCierre = 0;
+
+                function cerrar(evt) {
+                    if (evt && evt.preventDefault) evt.preventDefault();
+                    if (evt && evt.stopPropagation) evt.stopPropagation();
+                    var ahora = performance.now();
+                    if (ahora - ultimoCierre < 450) return;
+                    ultimoCierre = ahora;
+                    _bloquearAperturaMapaHasta = ahora + 900;
+                    cerrarMenu3D();
+                }
+
+                el.addEventListener('click', cerrar);
+                el.addEventListener('mouseenter', function () {
+                    el.setAttribute('scale', '1.12 1.12 1.12');
                 });
                 el.addEventListener('mouseleave', function () {
                     el.setAttribute('scale', '1 1 1');
@@ -2826,28 +2904,26 @@
 
             var btnCerrarMapa = document.createElement('a-entity');
             btnCerrarMapa.setAttribute('cerrar-mapa-vr', '');
-            btnCerrarMapa.setAttribute('geometry', 'primitive: rounded-rect; width: 0.42; height: 0.42; radius: 0.08');
-            btnCerrarMapa.setAttribute('material', 'shader: flat; color: #FF0000; opacity: 0.98; depthTest: false');
+            // Collider amplio para que la X sea facil de apuntar con el rayo de
+            // Quest/Meta. El boton rojo visible conserva su tamano compacto.
+            btnCerrarMapa.setAttribute('geometry', 'primitive: rounded-rect; width: 0.72; height: 0.72; radius: 0.12');
+            btnCerrarMapa.setAttribute('material', 'shader: flat; color: #FFFFFF; opacity: 0.001; transparent: true; depthTest: false; depthWrite: false');
             btnCerrarMapa.setAttribute('position', '1.68 1.53 0.04');
             btnCerrarMapa.setAttribute('class', 'clickable menu-btn-cerrar');
+
+            var fondoCerrarMapa = document.createElement('a-entity');
+            fondoCerrarMapa.setAttribute('geometry', 'primitive: rounded-rect; width: 0.46; height: 0.46; radius: 0.09');
+            fondoCerrarMapa.setAttribute('material', 'shader: flat; color: #FF0000; opacity: 0.98; depthTest: false');
+            fondoCerrarMapa.setAttribute('position', '0 0 0.01');
+            btnCerrarMapa.appendChild(fondoCerrarMapa);
 
             var textoCerrarMapa = document.createElement('a-entity');
             textoCerrarMapa.setAttribute('troika-text', {
                 value: 'X', color: '#FFFFFF', fontSize: 0.24,
                 textAlign: 'center', anchorX: 'center', anchorY: 'middle', fontWeight: 'bold'
             });
-            textoCerrarMapa.setAttribute('position', '0 0 0.025');
+            textoCerrarMapa.setAttribute('position', '0 0 0.035');
             btnCerrarMapa.appendChild(textoCerrarMapa);
-            btnCerrarMapa.addEventListener('click', function (evt) {
-                if (evt && evt.stopPropagation) evt.stopPropagation();
-                cerrarMenu3D();
-            });
-            btnCerrarMapa.addEventListener('mouseenter', function () {
-                btnCerrarMapa.setAttribute('scale', '1.12 1.12 1.12');
-            });
-            btnCerrarMapa.addEventListener('mouseleave', function () {
-                btnCerrarMapa.setAttribute('scale', '1 1 1');
-            });
             menu.appendChild(btnCerrarMapa);
 
             let cols = 5;
@@ -3002,6 +3078,8 @@
             menu.querySelectorAll('.menu-btn').forEach(function (boton) {
                 boton.classList.remove('clickable');
             });
+            var btnCerrar = menu.querySelector('.menu-btn-cerrar');
+            if (btnCerrar) btnCerrar.classList.remove('clickable');
             refreshRaycasters();
         }
 
@@ -3031,6 +3109,8 @@
                 if (btn2D) btn2D.innerText = 'Cerrar Mapa general';
                 var botonesMenu = menu.querySelectorAll('.menu-btn');
                 botonesMenu.forEach(b => b.classList.add('clickable'));
+                var btnCerrar = menu.querySelector('.menu-btn-cerrar');
+                if (btnCerrar) btnCerrar.classList.add('clickable');
                 refreshRaycasters();
             } else {
                 cerrarMenu3D();
@@ -4444,7 +4524,7 @@
         </a-entity>
 
         <a-entity id="hotspots-datalab" class="grupo-hotspots" visible="false">
-            <a-image src="#img-info-icon" position="-11.66 2.78 -0.57" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="-11.40 2.78 2.45" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-datalab; action: toggle">
             </a-image>
 
