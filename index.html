@@ -2188,13 +2188,16 @@
                 function priorizarBotonMapa() {
                     if (!el.object3D) return;
                     el.object3D.traverse(function (objeto) {
-                        if (objeto.isMesh) objeto.renderOrder = 1000;
+                        if (!objeto.isMesh) return;
+                        var esRotulo = objeto.el && objeto.el.classList && objeto.el.classList.contains('rotulo-mapa-esan');
+                        objeto.renderOrder = esRotulo ? 1001 : 1000;
                     });
                 }
 
                 el.addEventListener('object3dset', priorizarBotonMapa);
                 requestAnimationFrame(priorizarBotonMapa);
                 setTimeout(priorizarBotonMapa, 300);
+                setTimeout(priorizarBotonMapa, 1200);
                 el.addEventListener('click', function (evt) {
                     if (_transicionActiva) return;
                     if (evt && evt.stopPropagation) evt.stopPropagation();
@@ -3700,8 +3703,6 @@
             if (mapaCanvas) {
                 var mapaCtx = mapaCanvas.getContext('2d');
                 mapaCtx.clearRect(0, 0, mapaCanvas.width, mapaCanvas.height);
-                mapaCtx.fillStyle = '#FF0000';
-                mapaCtx.fillRect(0, 0, mapaCanvas.width, mapaCanvas.height);
                 mapaCtx.fillStyle = '#FFFFFF';
                 mapaCtx.font = 'bold 82px Arial, sans-serif';
                 mapaCtx.textAlign = 'center';
@@ -3728,7 +3729,10 @@
         <a-entity id="btn-mapa-escena" position="-0.14 6.50 -12.00" rotation="0 0 0"
             look-at="[camera]" class="clickable" abrir-mapa-vr
             geometry="primitive: rounded-rect; width: 3.1; height: 0.9; radius: 0.16"
-            material="shader: flat; src: #img-mapa-esan; color: #FFFFFF; opacity: 1; transparent: false; depthTest: false; side: double">
+            material="shader: flat; color: #FF0000; opacity: 0.96; transparent: true; depthTest: false; side: double">
+            <a-plane class="rotulo-mapa-esan" width="2.75" height="0.70" position="0 0 0.08"
+                material="shader: flat; src: #img-mapa-esan; transparent: true; opacity: 1; alphaTest: 0.01; depthTest: false; depthWrite: false; side: double">
+            </a-plane>
         </a-entity>
         <a-entity id="menu-3d" visible="false" scale="0.85 0.85 0.85" menu-follow="distance: 4.5; heightOffset: -0.1; lerp: 0.22"></a-entity>
 
