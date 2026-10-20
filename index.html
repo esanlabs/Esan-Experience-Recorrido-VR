@@ -3643,6 +3643,7 @@
             <canvas id="img-flecha-derecha" width="128" height="128"></canvas>
             <canvas id="img-flecha-abajo" width="128" height="128"></canvas>
             <canvas id="img-flecha-izquierda" width="128" height="128"></canvas>
+            <canvas id="img-mapa-esan" width="768" height="224"></canvas>
         </a-assets>
 
         <script>
@@ -3694,6 +3695,20 @@
                 d[1](ctx);
                 el.dataset.textureVersion = Date.now().toString();
             });
+
+            var mapaCanvas = document.getElementById('img-mapa-esan');
+            if (mapaCanvas) {
+                var mapaCtx = mapaCanvas.getContext('2d');
+                mapaCtx.clearRect(0, 0, mapaCanvas.width, mapaCanvas.height);
+                mapaCtx.fillStyle = '#FF0000';
+                mapaCtx.fillRect(0, 0, mapaCanvas.width, mapaCanvas.height);
+                mapaCtx.fillStyle = '#FFFFFF';
+                mapaCtx.font = 'bold 82px Arial, sans-serif';
+                mapaCtx.textAlign = 'center';
+                mapaCtx.textBaseline = 'middle';
+                mapaCtx.fillText('MAPA ESAN', mapaCanvas.width / 2, mapaCanvas.height / 2 + 3);
+                mapaCanvas.dataset.textureVersion = Date.now().toString();
+            }
         })();
         </script>
 
@@ -3713,9 +3728,7 @@
         <a-entity id="btn-mapa-escena" position="-0.14 6.50 -12.00" rotation="0 0 0"
             look-at="[camera]" class="clickable" abrir-mapa-vr
             geometry="primitive: rounded-rect; width: 3.1; height: 0.9; radius: 0.16"
-            material="shader: flat; color: #FF0000; opacity: 0.96; transparent: true; depthTest: false">
-            <a-entity troika-text="value: MAPA ESAN; color: #FFFFFF; fontSize: 0.32; maxWidth: 2.7; textAlign: center; anchorX: center; anchorY: middle; fontWeight: bold; depthTest: false; depthWrite: false"
-                position="0 0 0.06"></a-entity>
+            material="shader: flat; src: #img-mapa-esan; color: #FFFFFF; opacity: 1; transparent: false; depthTest: false; side: double">
         </a-entity>
         <a-entity id="menu-3d" visible="false" scale="0.85 0.85 0.85" menu-follow="distance: 4.5; heightOffset: -0.1; lerp: 0.22"></a-entity>
 
