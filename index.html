@@ -2034,7 +2034,8 @@
         const posicionesNavegacion = {
             'fuera': '-10.20 4.22 -6.32',
             'entrada': '7.36 3.35 9.48',
-            'jardin': '-2.92 3.00 -9.81'
+            'jardin': '-2.92 3.00 -9.81',
+            'robotica': '-4.00 1.95 -7.00'
         };
 
         const posicionMapaGeneralPorEscena = {
@@ -4766,7 +4767,7 @@
             <a-circle geometry="primitive: circle; radius: 0.85; segments: 96" position="0 -0.5 0" rotation="-90 0 0"
                 material="shader: flat; src: #img-logo; transparent: true; opacity: 1; side: double"></a-circle>
 
-            <a-image src="#img-info-icon" position="11.90 2 -1.56" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="6.04 1.07 -10.37" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-laboratorio-robotica; action: toggle">
             </a-image>
 
@@ -4803,7 +4804,7 @@
                 </a-plane>
             </a-entity>
 
-            <a-entity id="video-youtube-explanada" position="-11.25 0.3 -0.10" look-at="[camera]">
+            <a-entity id="video-youtube-explanada" position="-11.25 0.90 -0.10" look-at="[camera]">
                 <a-plane width="5.6" height="3.15" position="0 0 0" class="clickable youtube-card"
                     local-video-toggle="video: #video-robot-bailando; playButton: #video-robotica-play; pauseButton: #video-robotica-pause; label: #video-robotica-label; allowedScene: robotica"
                     material="shader: flat; src: #video-robot-bailando; side: double; transparent: false">
