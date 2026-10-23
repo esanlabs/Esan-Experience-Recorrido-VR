@@ -2685,10 +2685,13 @@
             contenedor.removeAttribute('look-at');
             if (posicionesNavegacion[_escenaActual]) {
                 contenedor.setAttribute('position', posicionesNavegacion[_escenaActual]);
-                contenedor.setAttribute('look-at', '[camera]');
             } else {
-                contenedor.setAttribute('menu-follow', 'distance: 7; heightOffset: 0.35; lerp: 0.18; fixed: true');
+                var yawInicial = parseFloat((iniciosEscena[_escenaActual] || '0 0 0').split(' ')[1]) || 0;
+                var angulo = yawInicial * Math.PI / 180;
+                contenedor.setAttribute('position',
+                    `${(-Math.sin(angulo) * 7).toFixed(2)} 1.95 ${(-Math.cos(angulo) * 7).toFixed(2)}`);
             }
+            contenedor.setAttribute('look-at', '[camera]');
 
             var regresosFijos = {
                 'jardin': 'entrada'
