@@ -2035,7 +2035,8 @@
             'fuera': '-10.20 4.22 -6.32',
             'entrada': '7.36 3.35 9.48',
             'jardin': '-2.92 3.00 -9.81',
-            'robotica': '-4.00 1.95 -7.00'
+            'robotica': '-4.00 1.95 -7.00',
+            'mundo_robotica': '-2.50 1.95 -7.00'
         };
 
         const posicionMapaGeneralPorEscena = {
@@ -4786,6 +4787,14 @@
                         vertex-a="-0.11 -0.18 0" vertex-b="-0.11 0.18 0" vertex-c="0.21 0 0"
                         position="0.04 0 0.08" material="shader: flat; color: #FFFFFF; side: double">
                     </a-triangle>
+                </a-entity>
+                <a-entity class="clickable youtube-card" position="0 -1.35 0.12"
+                    geometry="primitive: rounded-rect; width: 2.85; height: 0.48; radius: 0.08"
+                    material="shader: flat; color: #E3173E; opacity: 0.96; transparent: true; side: double"
+                    open-scene-frame="target: mundo_robotica">
+                    <a-entity position="0 0 0.02"
+                        troika-text="value: Ver video en 360; color: #FFFFFF; fontSize: 0.23; textAlign: center; anchorX: center; anchorY: middle; fontWeight: bold">
+                    </a-entity>
                 </a-entity>
             </a-entity>
 
