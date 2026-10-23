@@ -2214,6 +2214,7 @@
                     toggleMenu3D();
                 });
                 el.addEventListener('mouseenter', function () {
+                    if (document.querySelector('#menu-3d').getAttribute('visible')) return;
                     clearTimeout(salidaHoverTimer);
                     salidaHoverTimer = null;
                     el.setAttribute('visible', 'true');
@@ -3115,6 +3116,11 @@
             var menu = document.querySelector('#menu-3d');
             if (!menu) return;
             menu.setAttribute('visible', 'false');
+            var botonMapa = document.querySelector('#btn-mapa-escena');
+            if (botonMapa) {
+                botonMapa.setAttribute('visible', 'true');
+                botonMapa.classList.add('clickable');
+            }
             var btn2D = document.getElementById('btn-menu-2d');
             if (btn2D) btn2D.innerText = 'Mapa general';
             menu.querySelectorAll('.menu-btn').forEach(function (boton) {
@@ -3132,6 +3138,7 @@
             }
             var menu = document.querySelector('#menu-3d');
             var cam = document.querySelector('#camara-principal');
+            var botonMapa = document.querySelector('#btn-mapa-escena');
             var btn2D = document.getElementById('btn-menu-2d');
             var isVisible = menu.getAttribute('visible');
 
@@ -3146,6 +3153,10 @@
                     var nuevaPosicion = posCamara.clone().add(vectorDireccion);
                     menu.setAttribute('position', nuevaPosicion);
                     menu.setAttribute('look-at', '[camera]');
+                }
+                if (botonMapa) {
+                    botonMapa.setAttribute('visible', 'false');
+                    botonMapa.classList.remove('clickable');
                 }
                 menu.setAttribute('visible', 'true');
                 if (btn2D) btn2D.innerText = 'Cerrar Mapa general';
@@ -4582,7 +4593,7 @@
         </a-entity>
 
         <a-entity id="hotspots-datalab" class="grupo-hotspots" visible="false">
-            <a-image src="#img-info-icon" position="-9.80 2.78 -6.80" scale="0.8 0.8 0.8" look-at="[camera]"
+            <a-image src="#img-info-icon" position="-9.80 2.78 -7.80" scale="0.8 0.8 0.8" look-at="[camera]"
                 class="clickable icono-hotspot" hotspot-info="target: #panel-info-datalab; action: toggle">
             </a-image>
 
