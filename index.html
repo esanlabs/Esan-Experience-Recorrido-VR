@@ -2794,8 +2794,9 @@
                     .replace(/^(?:ir|volver|regresar|ingresar) a\s+/i, '');
                 var nombreLugar = tieneMenuRadial ? 'Elegir destino' : (esRegreso ? 'Regresar a ' : 'Ir a ') + destinoLugar;
                 var esEtiquetaExterior = _escenaActual === 'fuera';
-                var labelWidth = esEtiquetaExterior ? 2.75 : 2.35;
-                var labelHeight = esEtiquetaExterior ? 0.56 : (nombreLugar.length > 22 ? 0.58 : 0.44);
+                var esDestinoFabLab = flecha.target === 'fablab' || flecha.target === 'fablab2';
+                var labelWidth = esEtiquetaExterior ? 2.75 : (esDestinoFabLab ? 3.20 : 2.35);
+                var labelHeight = esEtiquetaExterior ? 0.56 : (esDestinoFabLab ? 0.44 : (nombreLugar.length > 22 ? 0.58 : 0.44));
 
                 var etiqueta = document.createElement('a-entity');
                 etiqueta.classList.add('etiqueta-flotante');
@@ -2840,9 +2841,10 @@
                     color: '#FFFFFF',
                     fontSize: nombreLugar.length > 22 ? 0.16 : 0.18,
                     maxWidth: labelWidth - 0.24,
-                    textAlign: 'center',
-                    anchorX: 'center',
-                    anchorY: 'middle',
+                    whiteSpace: esDestinoFabLab ? 'nowrap' : 'normal',
+                    align: 'center',
+                    anchor: 'center',
+                    baseline: 'center',
                     fontWeight: 'bold'
                 });
                 textoEtiqueta.setAttribute('position', '0 0.02 0.02');
