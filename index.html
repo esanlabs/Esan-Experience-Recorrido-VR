@@ -2792,15 +2792,19 @@
                 var destinoLugar = texto3DSeguro(flecha.label || nombresDestinos[flecha.target] || flecha.target)
                     .replace(/\n/g, ' ')
                     .replace(/^(?:ir|volver|regresar|ingresar) a\s+/i, '');
-                var nombreLugar = tieneMenuRadial ? 'Elegir destino' : (esRegreso ? 'Regresar a ' : 'Ir a ') + destinoLugar;
-                var esEtiquetaExterior = _escenaActual === 'fuera';
                 var esDestinoFabLab = flecha.target === 'fablab' || flecha.target === 'fablab2';
-                var labelWidth = esEtiquetaExterior ? 2.75 : (esDestinoFabLab ? 3.20 : 2.35);
-                var labelHeight = esEtiquetaExterior ? 0.56 : (esDestinoFabLab ? 0.44 : (nombreLugar.length > 22 ? 0.58 : 0.44));
+                var nombreLugar = tieneMenuRadial ? 'Elegir destino' : (esRegreso ? 'Regresar a ' : 'Ir a ') + destinoLugar;
+                if (esDestinoFabLab && !tieneMenuRadial) {
+                    nombreLugar = 'Regresar a FabLab\nSala ' + (flecha.target === 'fablab2' ? '2' : '1');
+                }
+                var esEtiquetaExterior = _escenaActual === 'fuera';
+                var labelWidth = esEtiquetaExterior ? 2.75 : (esDestinoFabLab ? 2.80 : 2.35);
+                var labelHeight = esEtiquetaExterior ? 0.56 : (esDestinoFabLab ? 0.62 : (nombreLugar.length > 22 ? 0.58 : 0.44));
 
                 var etiqueta = document.createElement('a-entity');
                 etiqueta.classList.add('etiqueta-flotante');
-                var salidaEtiqueta = item.direccion === 'izquierda' ? -1.90 : 1.90;
+                var distanciaEtiqueta = esDestinoFabLab ? 2.35 : 1.90;
+                var salidaEtiqueta = item.direccion === 'izquierda' ? -distanciaEtiqueta : distanciaEtiqueta;
                 etiqueta.setAttribute('position', salidaEtiqueta.toFixed(2) + ' 0 0.22');
                 etiqueta.setAttribute('visible', 'false');
                 if (!tieneMenuRadial) {
@@ -2841,7 +2845,7 @@
                     color: '#FFFFFF',
                     fontSize: nombreLugar.length > 22 ? 0.16 : 0.18,
                     maxWidth: labelWidth - 0.24,
-                    whiteSpace: esDestinoFabLab ? 'nowrap' : 'normal',
+                    whiteSpace: 'normal',
                     align: 'center',
                     anchor: 'center',
                     baseline: 'center',
