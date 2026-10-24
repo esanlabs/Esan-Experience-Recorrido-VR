@@ -2866,6 +2866,17 @@
                     menuRadial.setAttribute('position', (direccionMenu * 1.90).toFixed(2) + ' 0 0.22');
                     var cerrarMenuTimer = null;
 
+                    function punteroSobreFlechaOMenu() {
+                        return Array.from(document.querySelectorAll('[raycaster]')).some(function (cursor) {
+                            if (cursor.sceneEl.is('vr-mode') && !cursor.hasAttribute('laser-controls')) return false;
+                            var raycaster = cursor.components && cursor.components.raycaster;
+                            return raycaster && raycaster.intersections && raycaster.intersections.some(function (interseccion) {
+                                var objetivo = interseccion.object && interseccion.object.el;
+                                return objetivo && wrapper.contains(objetivo);
+                            });
+                        });
+                    }
+
                     function abrirMenuRadial() {
                         clearTimeout(cerrarMenuTimer);
                         contenedor.querySelectorAll('.menu-radial-destinos').forEach(function (otroMenu) {
@@ -2886,6 +2897,10 @@
                     function programarCierreMenu() {
                         clearTimeout(cerrarMenuTimer);
                         cerrarMenuTimer = setTimeout(function () {
+                            if (punteroSobreFlechaOMenu()) {
+                                programarCierreMenu();
+                                return;
+                            }
                             menuRadial.setAttribute('visible', 'false');
                             etiqueta.setAttribute('visible', 'false');
                             entidad.setAttribute('scale', '1.05 1.05 1.05');
