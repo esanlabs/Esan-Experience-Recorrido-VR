@@ -2695,6 +2695,11 @@
             return `${factor.toFixed(2)} ${factor.toFixed(2)} ${factor.toFixed(2)}`;
         }
 
+        var posicionPunteroFlechas = null;
+        document.addEventListener('pointermove', function (evt) {
+            posicionPunteroFlechas = { x: evt.clientX, y: evt.clientY };
+        });
+
         function generarFlechas(listaFlechas) {
             var contenedor = document.querySelector('#flechas-container');
             contenedor.innerHTML = '';
@@ -2867,9 +2872,27 @@
                     var cerrarMenuTimer = null;
 
                     function punteroSobreFlechaOMenu() {
+                        var escena = contenedor.sceneEl;
+                        if (!escena || !wrapper.object3D) return false;
+                        if (!escena.is('vr-mode') && posicionPunteroFlechas && escena.canvas && escena.camera) {
+                            var rect = escena.canvas.getBoundingClientRect();
+                            if (rect.width && rect.height) {
+                                if (posicionPunteroFlechas.x < rect.left || posicionPunteroFlechas.x > rect.right ||
+                                    posicionPunteroFlechas.y < rect.top || posicionPunteroFlechas.y > rect.bottom) return false;
+                                var puntero = new THREE.Vector2(
+                                    (posicionPunteroFlechas.x - rect.left) / rect.width * 2 - 1,
+                                    -(posicionPunteroFlechas.y - rect.top) / rect.height * 2 + 1
+                                );
+                                var rayoPuntero = new THREE.Raycaster();
+                                rayoPuntero.setFromCamera(puntero, escena.camera);
+                                return rayoPuntero.intersectObject(wrapper.object3D, true).length > 0;
+                            }
+                        }
                         return Array.from(document.querySelectorAll('[raycaster]')).some(function (cursor) {
-                            if (cursor.sceneEl.is('vr-mode') && !cursor.hasAttribute('laser-controls')) return false;
+                            if (escena.is('vr-mode') && !cursor.hasAttribute('laser-controls')) return false;
                             var raycaster = cursor.components && cursor.components.raycaster;
+                            if (raycaster && raycaster.raycaster &&
+                                raycaster.raycaster.intersectObject(wrapper.object3D, true).length) return true;
                             return raycaster && raycaster.intersections && raycaster.intersections.some(function (interseccion) {
                                 var objetivo = interseccion.object && interseccion.object.el;
                                 return objetivo && wrapper.contains(objetivo);
@@ -3315,9 +3338,7 @@
                 setTimeout(aplicarMarcosPaneles, 200);
             }, 7000);
 
-            document.getElementById('btn-menu-2d').addEventListener('click', toggleDestinosPanel);
-            document.getElementById('destinos-close').addEventListener('click', cerrarDestinosPanel);
-            document.getElementById('destinos-backdrop').addEventListener('click', cerrarDestinosPanel);
+            // Mapa general 2D desactivado: sus controles HTML están comentados.
             document.querySelector('#btn-lanzar-minijuego').addEventListener('click', activarMinijuego);
             document.querySelector('#btn-volver-tour').addEventListener('click', desactivarMinijuego);
             document.querySelector('#btn-reset-balon').addEventListener('click', resetearPelota);
@@ -3648,7 +3669,7 @@
     </script>
 </head>
 
-<body class="debug-tools">
+<body>
     <div id="pantalla-carga">
         <img src="imagenes/esann.png" alt="ESAN">
         <h1>Esan Xperience 360</h1>
@@ -3658,8 +3679,8 @@
 
     <audio id="audio-bienvenida" src="extras/bienvenidaEsanUniversity.wav" preload="auto"></audio>
 
+    <!-- Mapa general 2D desactivado; el mapa dentro del recorrido VR sigue disponible.
     <button id="btn-menu-2d">Mapa general</button>
-
     <div id="destinos-backdrop"></div>
     <aside id="destinos-panel" aria-hidden="true" aria-labelledby="destinos-title">
         <div class="destinos-header">
@@ -3685,6 +3706,7 @@
             </section>
         </div>
     </aside>
+    -->
 
     <div id="card-backdrop"></div>
     <div id="info-card-2d">
@@ -4988,6 +5010,7 @@
 
     </a-scene>
 
+    <!-- Herramientas de coordenadas y captura desactivadas en la web.
     <div id="dbg-panel">
         <div>Yaw (Y): <span id="dbg-y">0</span>°</div>
         <div>Pitch (X): <span id="dbg-x">0</span>°</div>
@@ -5132,6 +5155,7 @@
             t._to = setTimeout(function () { t.style.display = 'none'; }, 2500);
         }
     </script>
+    -->
 </body>
 
 </html>
