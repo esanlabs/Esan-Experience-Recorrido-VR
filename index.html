@@ -638,7 +638,7 @@
 
         const nombresDestinos = {
             'fuera': 'Exterior\nEsan',
-            'entrada': 'Entrada\nPrincipal', 'jardin': 'Ingresar a campus',
+            'entrada': 'Entrada\nPrincipal', 'jardin': 'Ingresar a\ncampus',
             'explanada': 'Explanada\nConvention', 'eventos': 'Eventos',
             'butacas': 'Butacas', 'biblioteca': 'Biblioteca',
             'aula': 'Aula Híbrida', 'fisica': 'Lab de\nFísica', 'conducta': 'Lab de\nConducta',
@@ -3003,9 +3003,9 @@
                     color: '#FFFFFF',
                     fontSize: 0.085,
                     maxWidth: 0.68,
-                    textAlign: 'center',
-                    anchorX: 'center',
-                    anchorY: 'middle',
+                    align: 'center',
+                    anchor: 'center',
+                    baseline: 'center',
                     fontWeight: 'bold'
                 });
                 txt.setAttribute('position', '0 0 0.02');
@@ -3258,7 +3258,7 @@
                 if (_transicionActiva) return;
                 if (inicioRevelado) return;
                 inicioRevelado = true;
-                ocultarLoader();
+                ocultarLoader(false, reproducirBienvenida);
                 precargarAdyacentes('fuera');
                 var hotspotEntrada = document.querySelector('#hotspots-fuera');
                 if (hotspotEntrada) {
@@ -3349,6 +3349,47 @@
         var _loaderOculto = false;
         var _inicioApp = Date.now();
         var _loaderMinimoMs = 4200;
+        var _bienvenidaIniciada = false;
+        var _bienvenidaIntentando = false;
+
+        function reproducirBienvenida() {
+            var audio = document.getElementById('audio-bienvenida');
+            if (!audio || _bienvenidaIniciada || _bienvenidaIntentando) return;
+            if (_escenaActual !== 'fuera') {
+                quitarReintentoBienvenida();
+                return;
+            }
+
+            _bienvenidaIntentando = true;
+            var intento = audio.play();
+            if (!intento || typeof intento.then !== 'function') {
+                _bienvenidaIniciada = true;
+                _bienvenidaIntentando = false;
+                quitarReintentoBienvenida();
+                return;
+            }
+            intento.then(function () {
+                _bienvenidaIniciada = true;
+                _bienvenidaIntentando = false;
+                quitarReintentoBienvenida();
+            }).catch(function (error) {
+                _bienvenidaIntentando = false;
+                if (error.name === 'NotAllowedError') {
+                    document.addEventListener('pointerdown', reproducirBienvenida);
+                    document.addEventListener('keydown', reproducirBienvenida);
+                    document.addEventListener('click', reproducirBienvenida);
+                } else {
+                    console.warn('No se pudo reproducir la bienvenida:', error);
+                }
+            });
+        }
+
+        function quitarReintentoBienvenida() {
+            document.removeEventListener('pointerdown', reproducirBienvenida);
+            document.removeEventListener('keydown', reproducirBienvenida);
+            document.removeEventListener('click', reproducirBienvenida);
+        }
+
         function mostrarLoaderTransicion(mensaje) {
             var loader = document.getElementById('pantalla-carga');
             if (!loader) return;
@@ -3361,7 +3402,7 @@
             });
         }
 
-        function ocultarLoader(sinEsperaMinima) {
+        function ocultarLoader(sinEsperaMinima, alOcultar) {
             var loader = document.getElementById('pantalla-carga');
             var loaderVr = document.getElementById('vr-loader');
             if (loaderVr) loaderVr.setAttribute('visible', 'false');
@@ -3373,6 +3414,7 @@
                     requestAnimationFrame(function () {
                         requestAnimationFrame(function () {
                             loader.classList.add('oculto');
+                            if (alOcultar) alOcultar();
                             setTimeout(() => {
                                 loader.style.display = 'none';
                                 window.dispatchEvent(new Event('resize'));
@@ -3618,6 +3660,8 @@
         <p>Iniciando realidad virtual</p>
         <div class="loader-bar"><span></span></div>
     </div>
+
+    <audio id="audio-bienvenida" src="extras/bienvenidaEsanUniversity.wav" preload="auto"></audio>
 
     <button id="btn-menu-2d">Mapa general</button>
 
