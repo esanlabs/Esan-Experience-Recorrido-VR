@@ -1970,13 +1970,15 @@
             ],
             'fisica': [
                 { target: 'datalab', position: '11.87 2 1.74', rotation: '0 -90 0', imgSrc: '#img-flecha-izquierda' },
-                { target: 'explanada', position: '9.07 2 -7.86', rotation: '0 0 0' }
+                { target: 'explanada', position: '9.07 2 -7.86', rotation: '0 0 0' },
+                { target: 'fablab', position: '4.56 2 -11.10', rotation: '0 90 0' }
             ],
             'conducta': [
                 { target: 'datalab', position: '0 -1 -10', rotation: '0 0 0', imgSrc: '#img-flecha-abajo' }
             ],
             'robotica': [
-                { target: 'datalab', position: '-9.25 2 -7.65', rotation: '0 0 0' }
+                { target: 'datalab', position: '-9.25 2 -7.65', rotation: '0 0 0' },
+                { target: 'conducta', position: '-4.29 10 11.21', rotation: '0 0 0' }
             ],
             'mundo_robotica': [
                 { target: 'robotica', position: '-0.65 2 -11.98', rotation: '0 0 0', label: 'Volver a Robótica' }
@@ -1992,7 +1994,8 @@
                 { target: 'fablab2', position: '0 -1 -10', rotation: '0 0 0' }
             ],
             'fablab2': [
-                { target: 'fablab', position: '0 -1 -10', rotation: '0 90 0', imgSrc: '#img-flecha-derecha' }
+                { target: 'fablab', position: '0 -1 -10', rotation: '0 90 0', imgSrc: '#img-flecha-derecha' },
+                { target: 'robotica', position: '-11.22 2 4.24', rotation: '0 0 0' }
             ],
             'estudio_pregrado': [
                 { target: 'estudio_mba', position: '-9.54 2.8 7.27', rotation: '0 0 0' }
@@ -2140,6 +2143,16 @@
             init: function () {
                 var el = this.el;
                 var cierreEtiquetaTimer = null;
+                function cerrarEtiquetaAlSalir(etiqueta) {
+                    if (etiqueta._punteroEncima || punteroSobreFlecha(el)) {
+                        cierreEtiquetaTimer = setTimeout(function () {
+                            cerrarEtiquetaAlSalir(etiqueta);
+                        }, 350);
+                    } else {
+                        etiqueta.setAttribute('visible', 'false');
+                        cierreEtiquetaTimer = null;
+                    }
+                }
                 el.addEventListener('click', function (evt) {
                     if (_transicionActiva) return;
                     if (_isDragging) return;
@@ -2164,7 +2177,7 @@
                     if (etiqueta) {
                         clearTimeout(cierreEtiquetaTimer);
                         cierreEtiquetaTimer = setTimeout(function () {
-                            if (!etiqueta._punteroEncima) etiqueta.setAttribute('visible', 'false');
+                            cerrarEtiquetaAlSalir(etiqueta);
                         }, 650);
                     }
                 });
@@ -2700,6 +2713,32 @@
             posicionPunteroFlechas = { x: evt.clientX, y: evt.clientY };
         });
 
+        function punteroSobreFlecha(entidad) {
+            var area = entidad.parentElement && entidad.parentElement.querySelector('.area-interactiva-flecha');
+            var escena = entidad.sceneEl;
+            if (!area || !area.object3D || !escena) return false;
+
+            if (!escena.is('vr-mode') && posicionPunteroFlechas && escena.canvas && escena.camera) {
+                var rect = escena.canvas.getBoundingClientRect();
+                if (!rect.width || !rect.height ||
+                    posicionPunteroFlechas.x < rect.left || posicionPunteroFlechas.x > rect.right ||
+                    posicionPunteroFlechas.y < rect.top || posicionPunteroFlechas.y > rect.bottom) return false;
+                var puntero = new THREE.Vector2(
+                    (posicionPunteroFlechas.x - rect.left) / rect.width * 2 - 1,
+                    -(posicionPunteroFlechas.y - rect.top) / rect.height * 2 + 1
+                );
+                var rayo = new THREE.Raycaster();
+                rayo.setFromCamera(puntero, escena.camera);
+                return rayo.intersectObject(area.object3D, true).length > 0;
+            }
+
+            return Array.from(document.querySelectorAll('[laser-controls][raycaster]')).some(function (cursor) {
+                var raycaster = cursor.components && cursor.components.raycaster;
+                return raycaster && raycaster.raycaster &&
+                    raycaster.raycaster.intersectObject(area.object3D, true).length > 0;
+            });
+        }
+
         function generarFlechas(listaFlechas) {
             var contenedor = document.querySelector('#flechas-container');
             contenedor.innerHTML = '';
@@ -2800,7 +2839,8 @@
                 var esDestinoFabLab = flecha.target === 'fablab' || flecha.target === 'fablab2';
                 var nombreLugar = tieneMenuRadial ? 'Elegir destino' : (esRegreso ? 'Regresar a ' : 'Ir a ') + destinoLugar;
                 if (esDestinoFabLab && !tieneMenuRadial) {
-                    nombreLugar = 'Regresar a FabLab\nSala ' + (flecha.target === 'fablab2' ? '2' : '1');
+                    nombreLugar = (esRegreso ? 'Regresar a ' : 'Ir a ') +
+                        'FabLab\nSala ' + (flecha.target === 'fablab2' ? '2' : '1');
                 }
                 var esEtiquetaExterior = _escenaActual === 'fuera';
                 var labelWidth = esEtiquetaExterior ? 2.75 : (esDestinoFabLab ? 2.80 : 2.35);
@@ -2833,9 +2873,15 @@
                     fondoEtiqueta.addEventListener('mouseleave', function () {
                         etiqueta._punteroEncima = false;
                         etiqueta.setAttribute('scale', '1 1 1');
-                        setTimeout(function () {
-                            if (!etiqueta._punteroEncima) etiqueta.setAttribute('visible', 'false');
-                        }, 350);
+                        function cerrarSiSaleDeFlecha() {
+                            if (etiqueta._punteroEncima) return;
+                            if (punteroSobreFlecha(entidad)) {
+                                setTimeout(cerrarSiSaleDeFlecha, 350);
+                            } else {
+                                etiqueta.setAttribute('visible', 'false');
+                            }
+                        }
+                        setTimeout(cerrarSiSaleDeFlecha, 350);
                     });
                     fondoEtiqueta.addEventListener('click', function (evt) {
                         if (_transicionActiva) return;
